@@ -1,0 +1,6 @@
+@TechTask_HostAddress = http://localhost:5186
+
+GET {{TechTask_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
