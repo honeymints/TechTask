@@ -12,8 +12,8 @@ public class ItemInfoInput
     public string UnitOfMeasurement { get; set; }
 
     [Column("Цена за единицу, евро")]
-    public string Cost { get; set; }
+    public float Cost { get; set; }
 
     [Column("Количество, шт.")]
-    public string Quantity { get; set; }
+    public int Quantity { get; set; }
 }

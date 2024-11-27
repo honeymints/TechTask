@@ -18,12 +18,21 @@ public class ItemController : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("Файл пустой.");
+            return BadRequest("Файл не был найден или пустой.");
         }
 
-        await _itemService.ParseDataFromExcel(file, cancellationToken);
+        var ItemInfoInput = await _itemService.ParseDataFromExcel(file, cancellationToken);
+
+        await _itemService.InsertItemInfo(ItemInfoInput);
 
         return Created();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetGroupedData()
+    {
+
+        return Ok(_itemService.GroupItemsByCostNotAbove200Euros());
     }
 
     // [HttpPost]

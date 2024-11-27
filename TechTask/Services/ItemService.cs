@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Ganss.Excel;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -17,28 +18,60 @@ public class ItemService
         _dbContext = dbContext;
     }
 
-    public async Task InsertItemInfo(List<ItemInfo> itemInfo)
+    public async Task InsertItemInfo(List<ItemInfoInput> itemInfoInputs)
     {
-        await _dbContext.AddRangeAsync(itemInfo);
+        using (var transaction = _dbContext.Database.BeginTransaction())
+        {
+            try
+            {
+                var itemInfos = itemInfoInputs.Select(x => new ItemInfo
+                {
+                    Name = x.Name,
 
-        await _dbContext.SaveChangesAsync();
+                    UnitOfMeasurement = x.UnitOfMeasurement,
+
+                    Cost = x.Cost,
+
+                    Quantity = x.Quantity,
+
+                    Status = ItemInfoStatusEnum.Raw,
+                }).ToList();
+
+                await _dbContext.AddRangeAsync(itemInfos);
+
+                await _dbContext.SaveChangesAsync();
+
+                transaction.Commit();
+            }
+            catch (Exception e)
+            {
+                transaction.Rollback();
+
+            }
+        }
     }
 
-    public async Task ParseDataFromExcel(IFormFile file, CancellationToken cancellationToken)
+    public async Task<List<ItemInfoInput>> ParseDataFromExcel(IFormFile file, CancellationToken cancellationToken)
     {
 
-        var data = new List<Dictionary<string, string>>();
+        var items = new List<ItemInfoInput>() { };
+        var filePath = Path.GetTempFileName();
+
+        using (var stream = File.Create(filePath))
+        {
+            await file.CopyToAsync(stream, cancellationToken);
+        }
 
         IWorkbook workbook;
-        using (FileStream fileStream = new FileStream("Data/Temp" + file.FileName, FileMode.Open, FileAccess.Read))
+
+        using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
             workbook = new XSSFWorkbook(fileStream);
 
-            await file.CopyToAsync(fileStream, cancellationToken);
-
-            var products = new ExcelMapper(file.FileName).Fetch();
-
+            var itemsInput = new ExcelMapper(filePath).Fetch<ItemInfoInput>().ToList();
+            items.AddRange(itemsInput);
         }
+        return items;
     }
 
     public async Task CheckStatusOfItemInfo(ItemInfo itemInfo)
@@ -46,8 +79,30 @@ public class ItemService
 
     }
 
-    public async Task GroupItemsByCostNotAbove200Euros()
+    public string? GroupItemsByCostNotAbove200Euros()
     {
+        var items = _dbContext.Items.AsNoTracking().AsEnumerable();
 
+
+        var splitItems = items.SelectMany(item =>
+        Enumerable.Range(1, item.Quantity).Select(_ => new
+        {
+            item.Cost,
+            item.Name,
+            Unit = 1
+        }));
+
+        var groupedItems = splitItems.GroupBy(x=>x.Name).ToList();
+
+        var jsonSplitItems = JsonConvert.SerializeObject(groupedItems);
+        
+        return jsonSplitItems;
+        // {
+
+        // }
+        // items.ForEach(x =>
+        // {
+        //     x.Cost
+        // });
     }
 }
