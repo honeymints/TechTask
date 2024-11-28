@@ -8,4 +8,6 @@ public class AppDbContext : DbContext
 
     public DbSet<ItemInfo> Items { get; set; }
 
+    public DbSet<GroupedItem> GroupedItems { get; set; }
+
 }

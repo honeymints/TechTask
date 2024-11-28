@@ -23,6 +23,6 @@ public class ItemInfo
 
 public enum ItemInfoStatusEnum
 {
-    Raw = 1,
+    UnProcessed = 1,
     Processed = 2
 }

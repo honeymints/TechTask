@@ -29,11 +29,9 @@ public class ItemController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetGroupedData()
+    public async Task<IActionResult> GetGroupedDataNotAbove200Euros()
     {
 
-        return Ok(_itemService.GroupItemsByCostNotAbove200Euros());
+        return Ok();
     }
-
-    // [HttpPost]
 }

@@ -34,7 +34,7 @@ public class ItemService
 
                     Quantity = x.Quantity,
 
-                    Status = ItemInfoStatusEnum.Raw,
+                    Status = ItemInfoStatusEnum.UnProcessed,
                 }).ToList();
 
                 await _dbContext.AddRangeAsync(itemInfos);
@@ -74,35 +74,5 @@ public class ItemService
         return items;
     }
 
-    public async Task CheckStatusOfItemInfo(ItemInfo itemInfo)
-    {
-
-    }
-
-    public string? GroupItemsByCostNotAbove200Euros()
-    {
-        var items = _dbContext.Items.AsNoTracking().AsEnumerable();
-
-
-        var splitItems = items.SelectMany(item =>
-        Enumerable.Range(1, item.Quantity).Select(_ => new
-        {
-            item.Cost,
-            item.Name,
-            Unit = 1
-        }));
-
-        var groupedItems = splitItems.GroupBy(x=>x.Name).ToList();
-
-        var jsonSplitItems = JsonConvert.SerializeObject(groupedItems);
-        
-        return jsonSplitItems;
-        // {
-
-        // }
-        // items.ForEach(x =>
-        // {
-        //     x.Cost
-        // });
-    }
+   
 }

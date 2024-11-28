@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechTask", "TechTask\TechTask.csproj", "{AC58CEB8-C24A-437F-96CA-DB88C7AE2FEB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechTask.ConsoleApp", "TechTask.ConsoleApp\TechTask.ConsoleApp.csproj", "{D924BF3A-F210-4B81-8FD8-B43F1268A88B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,13 @@ Global
 		{AC58CEB8-C24A-437F-96CA-DB88C7AE2FEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC58CEB8-C24A-437F-96CA-DB88C7AE2FEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC58CEB8-C24A-437F-96CA-DB88C7AE2FEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9FEC2A1-F3F1-489D-9BB3-DF7C1603DF12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9FEC2A1-F3F1-489D-9BB3-DF7C1603DF12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9FEC2A1-F3F1-489D-9BB3-DF7C1603DF12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9FEC2A1-F3F1-489D-9BB3-DF7C1603DF12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D924BF3A-F210-4B81-8FD8-B43F1268A88B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D924BF3A-F210-4B81-8FD8-B43F1268A88B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D924BF3A-F210-4B81-8FD8-B43F1268A88B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D924BF3A-F210-4B81-8FD8-B43F1268A88B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
