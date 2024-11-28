@@ -28,10 +28,4 @@ public class ItemController : ControllerBase
         return Created();
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetGroupedDataNotAbove200Euros()
-    {
-
-        return Ok();
-    }
 }

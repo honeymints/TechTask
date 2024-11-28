@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TechTask.Persistence;
 
 
 public class GroupedItem
 {
+    [Key]
     public int Id { get; set; }
 
     public string Name { get; set; }

@@ -11,7 +11,7 @@ using TechTask.Persistence;
 namespace TechTask.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241128131811_CreatedGroupedItemsTable")]
+    [Migration("20241128164451_CreatedGroupedItemsTable")]
     partial class CreatedGroupedItemsTable
     {
         /// <inheritdoc />

@@ -14,12 +14,9 @@ public class GroupedItemService
 
     public async Task GroupItems(float maxGroupPrice)
     {
-        var items = _dbContext.Items.AsNoTracking();
-
-        if (await items.AnyAsync(x => x.Status == ItemInfoStatusEnum.Processed))
-        {
-            throw new Exception("один из товаров уже был обработан!");
-        }
+        var items = _dbContext.Items
+        .AsNoTracking()
+        .Where(x => x.Status == ItemInfoStatusEnum.Processed);
 
         var groups = new List<List<GroupedItem>>();
 
@@ -47,11 +44,10 @@ public class GroupedItemService
                         {
                             Price = item.Cost,
                             Quantity = quantityToAdd,
-                            Name = $"Группа {groups.Count + 1}"
                         });
                         remainingQuantity -= quantityToAdd;
 
-                        item.Cost = remainingQuantity;
+                        item.Quantity = remainingQuantity;
 
                         addedToGroup = true;
                         break;
@@ -67,28 +63,36 @@ public class GroupedItemService
                         {
                             Price = item.Cost,
                             Quantity = quantityToAdd,
-                            Name = $"Группа {groups.Count + 1}"
                         }
                     });
-                    remainingQuantity -= quantityToAdd;
 
-                    item.Quantity = remainingQuantity;
-                    item.Status = item.Quantity == 0 ? ItemInfoStatusEnum.Processed : ItemInfoStatusEnum.UnProcessed;
+                    remainingQuantity -= quantityToAdd;
                 }
+
+                item.Quantity = remainingQuantity;
+                item.Status = item.Quantity == 0 ? ItemInfoStatusEnum.Processed : ItemInfoStatusEnum.UnProcessed;
+
+                _dbContext.Entry(item).State = EntityState.Modified;
             }
+            _dbContext.SaveChanges();
         }
 
-        await Insert(groups.SelectMany(x => x).ToList());
+        foreach (var (index, group) in groups.Select((item, index) => (index, item)))
+        {
+            group.ForEach(x => x.Name = $"Группа {index + 1}");
+        }
+
+        Insert(groups.SelectMany(x => x).ToList());
     }
 
-    public async Task Insert(List<GroupedItem> groupedItems)
+    public void Insert(List<GroupedItem> groupedItems)
     {
-        await _dbContext.GroupedItems.AddRangeAsync(groupedItems);
+        _dbContext.GroupedItems.AddRange(groupedItems);
 
-        await _dbContext.SaveChangesAsync();
+        _dbContext.SaveChanges();
     }
 
-    public async Task<GroupedItem> Get(int id)
+    public async Task<GroupedItemDto> Get(int id)
     {
         var item = await _dbContext.GroupedItems.FindAsync(id);
 
@@ -97,12 +101,20 @@ public class GroupedItemService
             throw new Exception("Группа под данным идентификатором не существует!");
         }
 
-        return item;
+        var itemDto = new GroupedItemDto
+        {
+            Name = item.Name,
+            TotalPrice = item.Quantity * item.Price
+        };
+
+        return itemDto;
     }
-    public List<GroupedItemDto> Get()
+    public async Task<List<GroupedItemDto>> Get()
     {
-        var groupedItemsQuery = _dbContext.GroupedItems
-        .GroupBy(x => x.Name).AsNoTracking();
+        var groupedItemsQuery = await _dbContext.GroupedItems
+        .GroupBy(x => x.Name)
+        .AsNoTracking()
+        .ToListAsync();
 
         var groupedItems = groupedItemsQuery
         .AsEnumerable()
