@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TechTask.BackgroundTask;
 using TechTask.Persistence;
 using TechTask.Services;
 
@@ -10,11 +11,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<AppDbContext>(options => 
+builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<GroupedItemService>();
+
+builder.Services.AddHostedService<GroupItemsTask>();
 
 var app = builder.Build();
 

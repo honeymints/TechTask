@@ -12,52 +12,56 @@ public class GroupedItemService
         _dbContext = dbContext;
     }
 
-    public async Task GroupItems(float maxGroupPrice)
+    public void GroupItems(float maxGroupPrice)
     {
-        var items = _dbContext.Items
-        .AsNoTracking()
-        .Where(x => x.Status == ItemInfoStatusEnum.Processed);
+        using var transaction = _dbContext.Database.BeginTransaction();
 
-        var groups = new List<List<GroupedItem>>();
-
-        var sortedItems = items
-        .OrderByDescending(item => item.Cost)
-        .ToList();
-
-        foreach (var item in sortedItems)
+        try
         {
-            var remainingQuantity = item.Quantity;
+            var items = _dbContext.Items
+            .AsNoTracking()
+            .Where(x => x.Status == ItemInfoStatusEnum.UnProcessed);
 
-            while (remainingQuantity > 0)
+            var groups = new List<List<GroupedItem>>();
+
+            var sortedItems = items
+            .OrderByDescending(item => item.Cost)
+            .ToList();
+
+            foreach (var item in sortedItems)
             {
-                bool addedToGroup = false;
+                var remainingQuantity = item.Quantity;
 
-                foreach (var group in groups)
+                while (remainingQuantity > 0)
                 {
-                    var currentGroupPrice = group.Sum(g => g.Price * g.Quantity);
-                    var spaceAvailable = maxGroupPrice - currentGroupPrice;
+                    bool addedToGroup = false;
 
-                    if (spaceAvailable >= item.Cost)
+                    foreach (var group in groups)
                     {
-                        var quantityToAdd = (int)Math.Min(remainingQuantity, Math.Floor(spaceAvailable / item.Cost));
-                        group.Add(new GroupedItem
+                        var currentGroupPrice = group.Sum(g => g.Price * g.Quantity);
+                        var spaceAvailable = maxGroupPrice - currentGroupPrice;
+
+                        if (spaceAvailable >= item.Cost)
                         {
-                            Price = item.Cost,
-                            Quantity = quantityToAdd,
-                        });
-                        remainingQuantity -= quantityToAdd;
+                            var quantityToAdd = (int)Math.Min(remainingQuantity, Math.Floor(spaceAvailable / item.Cost));
+                            group.Add(new GroupedItem
+                            {
+                                Price = item.Cost,
+                                Quantity = quantityToAdd,
+                            });
+                            remainingQuantity -= quantityToAdd;
 
-                        item.Quantity = remainingQuantity;
+                            item.Quantity = remainingQuantity;
 
-                        addedToGroup = true;
-                        break;
+                            addedToGroup = true;
+                            break;
+                        }
                     }
-                }
 
-                if (!addedToGroup)
-                {
-                    var quantityToAdd = (int)Math.Min(remainingQuantity, Math.Floor(maxGroupPrice / item.Cost));
-                    groups.Add(new List<GroupedItem>
+                    if (!addedToGroup)
+                    {
+                        var quantityToAdd = (int)Math.Min(remainingQuantity, Math.Floor(maxGroupPrice / item.Cost));
+                        groups.Add(new List<GroupedItem>
                     {
                         new GroupedItem
                         {
@@ -66,23 +70,31 @@ public class GroupedItemService
                         }
                     });
 
-                    remainingQuantity -= quantityToAdd;
+                        remainingQuantity -= quantityToAdd;
+                    }
+
+                    item.Quantity = remainingQuantity;
+                    item.Status = item.Quantity == 0 ? ItemInfoStatusEnum.Processed : ItemInfoStatusEnum.UnProcessed;
+
+                    _dbContext.Entry(item).State = EntityState.Modified;
                 }
-
-                item.Quantity = remainingQuantity;
-                item.Status = item.Quantity == 0 ? ItemInfoStatusEnum.Processed : ItemInfoStatusEnum.UnProcessed;
-
-                _dbContext.Entry(item).State = EntityState.Modified;
+                _dbContext.SaveChanges();
             }
+
+            foreach (var (index, group) in groups.Select((item, index) => (index, item)))
+            {
+                group.ForEach(x => x.Name = $"Группа {index + 1}");
+            }
+
             _dbContext.SaveChanges();
+            Insert(groups.SelectMany(x => x).ToList());
+            transaction.Commit();
         }
-
-        foreach (var (index, group) in groups.Select((item, index) => (index, item)))
+        catch (Exception e)
         {
-            group.ForEach(x => x.Name = $"Группа {index + 1}");
+            transaction.Rollback();
+            throw e;
         }
-
-        Insert(groups.SelectMany(x => x).ToList());
     }
 
     public void Insert(List<GroupedItem> groupedItems)
